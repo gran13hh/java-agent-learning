@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>学习资料 · Interview Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23564ad5'/%3E%3Cpath d='M12 12h16v12H18l-6 5z' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/interview.css">
+  <link rel="stylesheet" href="/knowledge.css">
+  <script src="/knowledge.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到学习资料</a>
+  <aside class="sidebar" aria-label="学习导航">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">✦</span><span>Interview<span class="brand-sub">LAB / 学习工作台</span></span></a>
+    <div class="sidebar-heading">我的练习空间</div>
+    <nav class="topic-nav"><a class="nav-item" href="/"><span class="nav-icon" aria-hidden="true">▦</span>我的题库</a><a class="nav-item" href="/interview.html"><span class="nav-icon" aria-hidden="true">▷</span>模拟面试</a><a class="nav-item active" href="/knowledge.html" aria-current="page"><span class="nav-icon" aria-hidden="true">▤</span>学习资料</a></nav>
+    <div class="sidebar-note"><span class="note-symbol" aria-hidden="true">✳</span><strong>把理解，讲出来。</strong><p>从一个概念，到一个例子，<br>练习清晰完整地表达。</p><span class="note-line"></span><span class="note-footer">每一次作答，都是一次进步。</span></div>
+    <div class="sidebar-footer"><span class="avatar">我</span><span>我的学习空间<small>保持好奇，持续练习</small></span></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><div class="breadcrumb">学习工作台<span>/</span><strong>学习资料</strong></div><span class="mock-badge">RAG · 可追溯的学习</span></header>
+    <main id="main">
+      <section class="page-heading"><div><div class="eyebrow">A LIBRARY OF YOUR UNDERSTANDING</div><h1>让反馈，有据可查<span class="heading-dot">.</span></h1><p>收集学过的知识，检索相关片段，把每次复盘连接到原文。</p></div><a class="button secondary" href="/interview.html">去练习 →</a></section>
+      <div id="knowledge-message" class="knowledge-message" role="status" aria-live="polite">正在读取资料…</div>
+      <div class="knowledge-grid">
+        <section class="practice-panel" aria-labelledby="import-heading">
+          <div class="practice-kicker">01 / 积累知识</div><h2 id="import-heading">导入一份学习资料</h2><p class="section-description">粘贴笔记，或选择 UTF-8 文本 / Markdown 文件。每份最多 6000 字符。</p>
+          <form id="import-form">
+            <label class="field-label" for="document-file">从文件读取 <span>可选，仅在本页填入正文</span></label><input id="document-file" type="file" accept=".txt,.md,text/plain,text/markdown">
+            <label class="field-label" for="document-title">资料标题</label><input type="text" id="document-title" maxlength="160" required placeholder="例如：Java 集合与复杂度笔记">
+            <label class="field-label" for="document-content">正文</label><textarea id="document-content" rows="9" maxlength="6000" required placeholder="写下概念、适用场景与自己的例子。可以在正文保留参考资料链接。"></textarea>
+            <p class="mock-note">建立索引会将正文片段发送到已配置的向量服务。用于面试反馈时，相关片段也会发送给聊天模型。两个站点各限 5 次 / 分钟。</p>
+            <button class="button primary" id="import-submit" type="submit">保存并建立索引 ↗</button>
+          </form>
+        </section>
+        <aside class="practice-panel library-panel" aria-labelledby="library-heading">
+          <div class="history-heading"><div><span class="eyebrow">YOUR LIBRARY</span><h2 id="library-heading">我的资料</h2></div><button class="page-button" id="refresh-library" aria-label="刷新资料列表" type="button">↻</button></div>
+          <p class="section-description">展示最近 100 份。相同正文只保存一次；刷新列表不调用模型。</p><div id="document-list"></div>
+        </aside>
+      </div>
+      <section class="practice-panel search-panel" aria-labelledby="search-heading"><div class="practice-kicker">02 / 检查召回</div><h2 id="search-heading">试着问一个问题</h2><p class="section-description">先观察检索到的原文是否相关，再到模拟面试中体验带来源的反馈。</p>
+        <form id="search-form"><label class="field-label" for="search-query">检索问题</label><div class="search-row"><input type="text" id="search-query" maxlength="1000" required placeholder="为什么 LinkedList 插入不一定更快？"><button class="button primary" id="search-submit" type="submit">检索资料 →</button></div></form>
+        <p class="mock-note">每次检索至多消耗 1 次向量请求，返回最多 3 个片段。相似度不是正确率；没有相关结果时不会强行补齐。</p><div id="search-results" aria-live="polite"></div>
+      </section>
+      <section class="practice-panel detail-panel" id="document-detail" aria-labelledby="detail-heading" hidden><div class="practice-kicker">03 / 回到原文</div><h2 id="detail-heading" tabindex="-1"></h2><p id="detail-meta" class="section-description"></p><details><summary>展开完整原文</summary><pre id="detail-content"></pre></details><div id="detail-chunks"></div></section>
+      <footer class="page-footer"><span>从记住结论，到找到依据。</span><span>Interview Lab / 你的面试准备空间</span></footer>
+    </main>
+  </div>
+</body>
+</html>

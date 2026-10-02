@@ -1,0 +1,28 @@
+.knowledge-grid { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:24px; align-items:start; }
+.knowledge-message { margin:24px 0; padding:15px 20px; background:#eeebfc; color:#594ca0; border-radius:10px; line-height:1.8; overflow-wrap:anywhere; }
+.knowledge-message.error { background:#fff0ee; color:#aa443c; }
+#import-form input,#import-form textarea,.search-row input { width:100%; }
+#document-title,#search-query { min-width:0; padding:12px 14px; border:1px solid var(--line); border-radius:9px; background:#fff; color:var(--ink); outline-offset:3px; }
+#document-title:focus,#search-query:focus { border-color:var(--purple); }
+#document-title::placeholder,#search-query::placeholder { color:#a0a1af; font-size:12px; }
+#document-file::file-selector-button { padding:8px 12px; border:1px solid var(--line); border-radius:7px; background:#f7f5ff; color:var(--purple); cursor:pointer; margin-right:12px; }
+#import-form .field-label { margin-top:20px; }
+#document-file { font-size:12px; }
+#import-submit { margin-top:22px; }
+.library-panel .section-description { margin-bottom:18px; }
+.document-card { border:1px solid var(--line); border-radius:12px; padding:18px; margin-top:12px; }
+.document-card h3 { font-size:14px; line-height:1.7; margin:0 0 8px; overflow-wrap:anywhere; }
+.document-card p { color:#77778b; font-size:12px; line-height:1.8; }
+.document-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.document-actions .button { padding:8px 12px; font-size:11px; min-height:34px; }
+.search-panel,.detail-panel { margin-top:24px; min-height:0; }
+.search-row { display:flex; gap:12px; }
+.search-row .button { white-space:nowrap; }
+.source-card { margin-top:20px; padding:22px; background:#f8f7fd; border:1px solid #ebe6fa; border-radius:12px; }
+.source-card h3 { font-size:14px; line-height:1.8; margin:0 0 8px; }
+.source-card .source-meta { font-size:11px; color:#777089; margin-bottom:12px; line-height:1.8; }
+.source-card pre,.detail-panel pre { white-space:pre-wrap; overflow-wrap:anywhere; font:inherit; line-height:1.9; color:#626278; }
+.source-card .button { margin-top:14px; }
+.detail-panel summary { cursor:pointer; color:var(--purple); margin:18px 0; }
+@media(max-width:1000px) { .knowledge-grid { grid-template-columns:1fr; } }
+@media(max-width:640px) { .search-row { flex-direction:column; } .knowledge-grid { gap:18px; } .source-card { padding:16px; } }

@@ -16,7 +16,7 @@ import java.util.*;
 
 /** 聊天与向量分开配置、分开额度；后续 RAG 也必须经这个入口访问向量站点。 */
 @Component
-public class ModelGateway {
+public class ModelGateway implements VectorEncoder {
     private final AiProperties properties;
     private final RequestBudget budget;
     private final List<OpenAIClient> clients = new ArrayList<>();
@@ -93,6 +93,14 @@ public class ModelGateway {
             }
             return vectors;
         } catch (RuntimeException exception) { throw sanitized(exception); }
+    }
+
+    /** 相同维度不代表相同向量空间；地址、模型或维度变化后必须重建索引。不包含密钥。 */
+    public String embeddingIdentity() {
+        var endpoint = properties.getEmbedding();
+        String identity = Objects.toString(endpoint.getBaseUrl(), "").replaceAll("/+$", "") + "\n"
+                + endpoint.getModel() + "\n" + endpoint.getExpectedDimensions();
+        return com.example.interviewagent.knowledge.KnowledgeText.sha256(identity);
     }
 
     private RuntimeException sanitized(RuntimeException exception) {

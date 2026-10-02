@@ -221,10 +221,10 @@ async function generateFeedback() {
   if (practice.busy || Date.now() < practice.retryAt || !practice.session) return;
   setBusy(true);
   $("practice-error").hidden = true;
-  $("feedback-hint").textContent = "正在生成 AI 反馈，通常需要几秒至几十秒。回答已保存。";
+  $("feedback-hint").textContent = "正在检索资料并生成 AI 反馈，最多可能需要约两分钟。回答已保存。";
   try {
     // 回答的保存与反馈生成是两个请求，后者失败不会撤销前者。
-    practice.session = await request(`/api/interviews/${practice.session.id}/turns/${practice.selected}/feedback`, {}, 60000);
+    practice.session = await request(`/api/interviews/${practice.session.id}/turns/${practice.selected}/feedback`, {}, 110000);
     renderSession();
   } catch (error) {
     if (error.retryAfter > 0) practice.retryAt = Date.now() + error.retryAfter * 1000;
@@ -243,7 +243,7 @@ async function loadAiMode() {
     const status = await request("/api/ai/status");
     const mock = status.feedbackMode === "MOCK";
     $("ai-mode-label").textContent = mock ? "MOCK · 规则反馈" : "AI · 面试反馈";
-    $("ai-mode-note").textContent = mock ? "当前使用本地 Mock 规则，不调用模型。" : "提交后将问题、参考答案和回答发送到配置的模型服务。聊天与向量站点各限 5 次 / 分钟。";
+    $("ai-mode-note").textContent = mock ? "当前使用本地 Mock 规则，不调用模型。" : "提交后会检索已就绪的资料，再将问题、参考答案、回答及相关片段发送到配置的模型服务。聊天与向量站点各限 5 次 / 分钟。";
   } catch (_) {
     $("ai-mode-label").textContent = "反馈模式待确认";
     $("ai-mode-note").textContent = "暂时无法读取反馈模式，请检查服务后刷新。";

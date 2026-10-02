@@ -116,7 +116,7 @@ class ModelGatewayTest {
 
     @Test
     void invalidModelOutputCannotBecomeSuccessfulFeedback() {
-        var evaluator = new AiFeedbackEvaluator(gateway);
+        var evaluator = new AiFeedbackEvaluator(gateway, null);
         assertThrows(AiCallException.class, () -> evaluator.validateAndFormat("不是 JSON"));
         assertThrows(AiCallException.class, () -> evaluator.validateAndFormat("{}"));
         String valid = "{\"assessment\":\"基本准确\",\"strengths\":[\"概念清晰\"],\"improvements\":[\"补充实例\"],\"followUpQuestion\":\"你的项目中如何应用？\"}";
