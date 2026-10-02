@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f7fb">
+  <title>我的题库 · Interview Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23564ad5'/%3E%3Cpath d='M12 12h16v12H18l-6 5z' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到题目列表</a>
+  <aside class="sidebar" aria-label="题库导航">
+    <a class="brand" href="/" aria-label="Interview Lab 首页">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5h14v11H10l-5 4V5Z"/><path d="M9 9h6M9 12h4"/></svg></span>
+      <span>Interview<span class="brand-sub">LAB / 学习工作台</span></span>
+    </a>
+    <div class="sidebar-heading">我的知识库</div>
+    <nav id="topic-nav" class="topic-nav" aria-label="按主题筛选">
+      <button type="button" class="nav-item active" data-topic="" aria-pressed="true"><span class="nav-icon" aria-hidden="true">▦</span>全部题目<span class="nav-arrow" aria-hidden="true">↗</span></button>
+      <span class="nav-divider"></span>
+      <button type="button" class="nav-item" data-topic="JAVA" aria-pressed="false"><span class="topic-dot java"></span>Java 基础</button>
+      <button type="button" class="nav-item" data-topic="MYSQL" aria-pressed="false"><span class="topic-dot mysql"></span>MySQL 数据库</button>
+      <button type="button" class="nav-item" data-topic="REDIS" aria-pressed="false"><span class="topic-dot redis"></span>Redis 缓存</button>
+      <button type="button" class="nav-item" data-topic="AGENT" aria-pressed="false"><span class="topic-dot agent"></span>AI Agent</button>
+    </nav>
+    <div class="sidebar-note">
+      <span class="note-symbol" aria-hidden="true">✳</span>
+      <strong>先回忆，再看答案。</strong>
+      <p>能用自己的话讲清楚，<br>才算真正掌握。</p>
+      <span class="note-line"></span>
+      <span class="note-footer">一点积累，一步向前。</span>
+    </div>
+    <div class="sidebar-footer"><span class="avatar">我</span><span>我的学习空间<small>保持好奇，持续练习</small></span></div>
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar">
+      <div class="breadcrumb">学习工作台<span>/</span><strong>题库</strong></div>
+      <span id="connection-status" class="connection" role="status"><i></i>正在连接</span>
+    </header>
+    <main id="main">
+      <section class="page-heading">
+        <div><div class="eyebrow">BUILD YOUR KNOWLEDGE</div><h1>我的面试题库<span class="heading-dot">.</span></h1><p>把零散的知识，整理成能讲清楚的答案。</p></div>
+        <button id="add-question" class="button primary" type="button"><span aria-hidden="true">＋</span>新增题目</button>
+      </section>
+
+      <section class="learning-banner" aria-label="练习建议">
+        <div class="banner-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M7 7h8a4 4 0 0 1 4 4v15a6 6 0 0 0-5-2H7V7Zm18 0h-2a4 4 0 0 0-4 4v15a6 6 0 0 1 5-2h1V7Z"/><path d="M10 12h4m-4 4h4"/></svg></div>
+        <div class="banner-copy"><strong>今天，从一道好问题开始</strong><span>选一道题，先试着回答，再展开参考答案查漏补缺。</span></div>
+        <div class="banner-steps" aria-hidden="true"><span>01 选题</span><b>—</b><span>02 回忆</span><b>—</b><span>03 核对</span></div>
+      </section>
+
+      <div class="content-grid">
+        <section class="library-panel" aria-labelledby="list-heading">
+          <div class="list-toolbar"><div><h2 id="list-heading">全部题目</h2><span id="total-label" class="count-label">正在加载</span></div><label class="page-size-label">每页<select id="page-size" aria-label="每页题目数"><option value="5">5 条</option><option value="10">10 条</option><option value="20">20 条</option></select></label></div>
+          <div class="list-caption"><span>题目 / 主题</span><span>由新到旧</span></div>
+          <div id="question-list" class="question-list" aria-busy="true"></div>
+          <div id="list-feedback" class="list-feedback" role="status" hidden></div>
+          <footer class="pagination"><span id="range-label">—</span><div><button id="prev-page" class="page-button" type="button" aria-label="上一页" disabled>←</button><span id="page-label">1 / 1</span><button id="next-page" class="page-button" type="button" aria-label="下一页" disabled>→</button></div></footer>
+        </section>
+
+        <aside class="detail-panel" aria-label="题目详情">
+          <div class="detail-topline"><span class="detail-eyebrow">FOCUS / 专注一题</span><span class="spark" aria-hidden="true">✦</span></div>
+          <div id="detail-content" aria-live="polite"><div class="detail-placeholder"><span aria-hidden="true">↖</span><h2 id="detail-heading">选一道题，开始思考</h2><p>点击左侧题目，在这里查看问题和参考答案。</p></div></div>
+          <div class="detail-footnote"><span aria-hidden="true">◌</span>理解思路，比记住措辞更重要。</div>
+        </aside>
+      </div>
+      <footer class="page-footer"><span>每一份理解，都算数。</span><span>Interview Lab <span class="footer-separator">/</span> 你的面试准备空间</span></footer>
+    </main>
+  </div>
+
+  <dialog id="question-dialog" aria-labelledby="dialog-title">
+    <form id="question-form">
+      <div class="dialog-heading"><div><span class="eyebrow">ONE MORE STEP</span><h2 id="dialog-title">收下一道好问题</h2><p>用自己的话整理答案，留下理解的痕迹。</p></div><button id="close-dialog" type="button" class="close-button" aria-label="关闭新增题目">×</button></div>
+      <label class="field-label" for="question-title">题目<span>必填</span></label>
+      <textarea id="question-title" name="title" rows="2" maxlength="200" required placeholder="例如：HashMap 为什么需要 equals 和 hashCode？" autofocus></textarea>
+      <div class="field-meta"><span>一句话，说明你想弄懂的问题。</span><span id="title-count">0 / 200</span></div>
+      <div class="form-row"><div><label class="field-label" for="question-topic">主题</label><select id="question-topic" name="topic" required><option value="JAVA">Java 基础</option><option value="MYSQL">MySQL 数据库</option><option value="REDIS">Redis 缓存</option><option value="AGENT">AI Agent</option></select></div><div><label class="field-label" for="question-difficulty">难度</label><select id="question-difficulty" name="difficulty" required><option value="EASY">基础</option><option value="MEDIUM">进阶</option><option value="HARD">挑战</option></select></div></div>
+      <label class="field-label" for="question-answer">参考答案<span>必填</span></label>
+      <textarea id="question-answer" name="referenceAnswer" rows="6" maxlength="10000" required placeholder="写下核心概念、原因和一个例子……"></textarea>
+      <div class="field-meta"><span>支持换行，按纯文本保存。</span><span id="answer-count">0 / 10000</span></div>
+      <div id="form-error" class="form-error" role="alert" hidden></div>
+      <div class="dialog-footer"><button id="cancel-dialog" type="button" class="button secondary">取消</button><button id="submit-question" type="submit" class="button primary">保存到题库<span aria-hidden="true">↗</span></button></div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>
