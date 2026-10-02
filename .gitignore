@@ -1,0 +1,29 @@
+# macOS / IDE
+.DS_Store
+.idea/
+*.iml
+.vscode/
+
+# Maven build output; keep Maven Wrapper files tracked.
+target/
+.m2/
+
+# Local credentials and configuration templates
+.env
+.env.*
+!.env.example
+application-local.yml
+application-local.yaml
+application-local.properties
+
+# Runtime data, private documents and logs
+data/
+logs/
+*.log
+*.pid
+*.hprof
+*.jfr
+
+# Embedded database files, if introduced for local tests
+*.mv.db
+*.trace.db
