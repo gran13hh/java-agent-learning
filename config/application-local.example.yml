@@ -3,3 +3,20 @@
 spring:
   datasource:
     password: "${DB_PASSWORD:CHANGE_ME}"
+
+# 当前应用读取 app.ai：聊天反馈与向量调用采用独立地址、Key 和每分钟 5 次额度。
+# Base URL 使用服务商提供的完整版本前缀（例如 /v1）；不是 /chat/completions 地址。
+app:
+  ai:
+    feedback-mode: "${AI_FEEDBACK_MODE:AI}" # 改为 MOCK 可离线练习；已有记录保持原来的反馈。
+    chat:
+      base-url: "https://YOUR_PROVIDER/v1"
+      api-key: "${CHAT_API_KEY:CHANGE_ME}"
+      model: "YOUR_MODEL_NAME"
+    # 向量网关已可调用；V3 再接入资料导入和检索。
+    embedding:
+      base-url: "https://YOUR_EMBEDDING_PROVIDER/v1"
+      api-key: "${EMBEDDING_API_KEY:CHANGE_ME}"
+      model: "YOUR_EMBEDDING_MODEL_NAME"
+      # 填写实际测试获得的向量维度；不是要求服务端降维的请求参数。
+      expected-dimensions: 4096

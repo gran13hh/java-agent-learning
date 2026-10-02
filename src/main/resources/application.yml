@@ -1,3 +1,6 @@
+app:
+  ai:
+    feedback-mode: ${AI_FEEDBACK_MODE:AI}
 server:
   # 当前是本地单用户教学应用，默认只监听本机。
   address: 127.0.0.1

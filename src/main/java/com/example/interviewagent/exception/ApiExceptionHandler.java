@@ -19,6 +19,21 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     private static final Logger LOG = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
+    @ExceptionHandler(AiRateLimitException.class)
+    public ResponseEntity<ProblemDetail> aiRateLimit(AiRateLimitException exception) {
+        var problem = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, exception.getMessage());
+        problem.setProperty("code", "AI_RATE_LIMITED");
+        problem.setProperty("retryAfterSeconds", exception.retryAfterSeconds());
+        return ResponseEntity.status(429).header("Retry-After", Long.toString(exception.retryAfterSeconds())).body(problem);
+    }
+
+    @ExceptionHandler(AiCallException.class)
+    public ProblemDetail aiFailure(AiCallException exception) {
+        var problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, exception.getMessage());
+        problem.setProperty("code", "AI_CALL_FAILED");
+        return problem;
+    }
+
     @ExceptionHandler(QuestionNotFoundException.class)
     public ProblemDetail notFound(QuestionNotFoundException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());

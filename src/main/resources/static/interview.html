@@ -19,7 +19,7 @@
     <div class="sidebar-footer"><span class="avatar">我</span><span>我的学习空间<small>保持好奇，持续练习</small></span></div>
   </aside>
   <div class="workspace">
-    <header class="topbar"><div class="breadcrumb">学习工作台<span>/</span><strong>模拟面试</strong></div><span class="mock-badge">MOCK · 规则反馈</span></header>
+    <header class="topbar"><div class="breadcrumb">学习工作台<span>/</span><strong>模拟面试</strong></div><span id="ai-mode-label" class="mock-badge">正在读取反馈模式</span></header>
     <main id="main">
       <section class="page-heading"><div><div class="eyebrow">PRACTICE MAKES PROGRESS</div><h1>让知识，成为表达<span class="heading-dot">.</span></h1><p>逐题思考、认真作答，留下一份可以回看的成长记录。</p></div><button id="new-session" class="button secondary" type="button">新建练习</button></section>
       <div class="practice-grid">
@@ -31,7 +31,7 @@
             <div class="form-row"><div><label class="field-label" for="practice-topic">练习主题</label><select id="practice-topic"><option value="">综合练习</option><option value="JAVA">Java 基础</option><option value="MYSQL">MySQL 数据库</option><option value="REDIS">Redis 缓存</option><option value="AGENT">AI Agent</option></select></div><div><label class="field-label" for="practice-count">练习题数</label><select id="practice-count"><option value="1">1 题 · 热身</option><option value="2">2 题 · 小练习</option><option value="3" selected>3 题 · 专注练习</option><option value="5">5 题 · 挑战</option><option value="10">10 题 · 深入练习</option></select></div></div>
             <div class="practice-explainer"><span aria-hidden="true">✦</span><div><strong>留出一点思考的时间</strong><p>按题库最新顺序选题，创建后固定题目。回答提交即保存，可从右侧历史记录继续。</p></div></div>
             <button id="start-session" class="button primary" type="submit">开始练习 <span aria-hidden="true">→</span></button>
-            <p class="mock-note">当前反馈来自本地规则，未调用 AI，不评分、不判断答案正确性。</p>
+            <p id="ai-mode-note" class="mock-note">正在读取反馈配置…</p>
           </form>
           <section id="session-panel" hidden>
             <div class="session-meta"><span id="session-label" class="practice-kicker"></span><span id="session-status" class="session-state"></span></div>
@@ -39,7 +39,7 @@
             <nav id="turn-nav" class="turn-nav" aria-label="面试题目"></nav>
             <div id="turn-meta" class="turn-meta"></div><h2 id="turn-title" class="turn-title" tabindex="-1"></h2>
             <form id="answer-form"><label class="field-label" for="practice-answer">你的回答<span>先想清楚，再写下来</span></label><textarea id="practice-answer" rows="8" maxlength="10000" required placeholder="可以从三个角度展开：是什么、为什么、如何在项目中使用……"></textarea><div class="field-meta"><span>提交后保存；未提交的草稿刷新后会丢失。</span><span id="practice-answer-count">0 / 10000</span></div><button id="submit-answer" class="button primary" type="submit">提交回答 <span aria-hidden="true">↗</span></button></form>
-            <div id="review-panel" hidden><div class="review-block"><h3>我的回答</h3><p id="saved-answer"></p></div><div class="review-block feedback-block"><div class="feedback-heading"><h3>表达与复盘建议</h3><span class="mock-badge">MOCK</span></div><p id="saved-feedback"></p></div><details class="reference-block"><summary>展开参考答案，对照复盘</summary><p id="saved-reference"></p></details><div class="review-actions"><span id="completion-note"></span><button id="next-turn" class="button primary" type="button">继续下一题 →</button></div></div>
+            <div id="review-panel" hidden><div class="review-block"><h3>我的回答</h3><p id="saved-answer"></p></div><div class="review-block feedback-block"><div class="feedback-heading"><h3>表达与复盘建议</h3><span id="feedback-mode-label" class="mock-badge"></span></div><p id="saved-feedback"></p><button id="generate-feedback" class="button secondary" type="button" hidden>生成 AI 反馈</button><p id="feedback-hint" class="mock-note" role="status"></p></div><details class="reference-block"><summary>展开参考答案，对照复盘</summary><p id="saved-reference"></p></details><div class="review-actions"><span id="completion-note"></span><button id="next-turn" class="button primary" type="button">继续下一题 →</button></div></div>
           </section>
         </section>
         <aside class="history-panel" aria-labelledby="history-heading"><div class="history-heading"><div><span class="eyebrow">YOUR JOURNEY</span><h2 id="history-heading">练习记录</h2></div><button id="refresh-history" class="page-button" type="button" aria-label="刷新练习记录">↻</button></div><p class="history-description">已完成的用来复盘，进行中的随时继续。</p><div id="history-error" class="form-error" role="alert" hidden></div><div id="history-list" aria-live="polite"></div><div class="history-pagination"><button id="history-prev" class="page-button" type="button" aria-label="上一页记录">←</button><span id="history-page"></span><button id="history-next" class="page-button" type="button" aria-label="下一页记录">→</button></div><div class="history-tip">从“记住答案”，到“讲清原因”。<br>一次只专注一道题。</div></aside>

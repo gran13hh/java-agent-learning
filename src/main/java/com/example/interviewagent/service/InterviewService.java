@@ -60,7 +60,7 @@ public class InterviewService {
         if (session.status() != InterviewStatus.IN_PROGRESS || current.id() != turn.id()) {
             throw new InterviewConflictException("请按顺序回答当前题目");
         }
-        // 当前仅执行本地 Mock，耗时很短。真实模型调用不能直接放到这里长时间占用锁。
+        // 这里只执行本地 Mock 或 PENDING 占位。真实模型请求在 AiFeedbackService 中独立执行。
         var feedback = feedbackProvider.evaluate(turn, answer);
         interviews.saveAnswer(turn.id(), answer, feedback.text(), feedback.mode());
         if (turn.position() == session.questionCount()) interviews.complete(id);

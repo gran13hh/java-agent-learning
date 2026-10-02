@@ -4,7 +4,7 @@
 const topicLabels = { JAVA: "Java 基础", MYSQL: "MySQL 数据库", REDIS: "Redis 缓存", AGENT: "AI Agent" };
 const difficultyLabels = { EASY: "基础", MEDIUM: "进阶", HARD: "挑战" };
 const $ = (id) => document.getElementById(id);
-const practice = { session: null, selected: null, busy: false, page: 1, pages: 1, historyVersion: 0, drafts: new Map() };
+const practice = { session: null, selected: null, busy: false, page: 1, pages: 1, historyVersion: 0, drafts: new Map(), retryAt: 0 };
 
 function textNode(tag, text, className) {
   const element = document.createElement(tag);
@@ -13,9 +13,9 @@ function textNode(tag, text, className) {
   return element;
 }
 
-async function request(url, body) {
+async function request(url, body, timeout = 15000) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 15000);
+  const timer = setTimeout(() => controller.abort(), timeout);
   try {
     const response = await fetch(url, {
       signal: controller.signal,
@@ -25,6 +25,8 @@ async function request(url, body) {
     if (!response.ok) {
       const error = new Error(data.detail || "请求失败，请稍后重试。");
       error.status = response.status;
+      error.code = data.code;
+      error.retryAfter = Number(data.retryAfterSeconds || response.headers.get("Retry-After") || 0);
       throw error;
     }
     return data;
@@ -35,7 +37,7 @@ async function request(url, body) {
 
 function showError(error, writing = false) {
   const box = $("practice-error");
-  const uncertain = !error.status || error.status >= 500;
+  const uncertain = !error.status || (error.status >= 500 && !error.code);
   box.replaceChildren(textNode("p", uncertain
     ? (writing ? "未能确认保存结果，请先刷新练习记录核对。相同回答可安全重试；新建练习请先确认记录，避免重复创建。" : "暂时无法读取数据，请检查服务后重试。")
     : error.message));
@@ -50,7 +52,7 @@ function showError(error, writing = false) {
 
 function setBusy(value) {
   practice.busy = value;
-  for (const id of ["new-session", "start-session", "submit-answer", "practice-topic", "practice-count", "practice-answer", "next-turn"]) {
+  for (const id of ["new-session", "start-session", "submit-answer", "practice-topic", "practice-count", "practice-answer", "next-turn", "generate-feedback"]) {
     $(id).disabled = value;
   }
   document.querySelectorAll(".history-item, .turn-button").forEach((button) => {
@@ -58,6 +60,7 @@ function setBusy(value) {
   });
   $("start-session").textContent = value ? "请稍候…" : "开始练习 →";
   $("submit-answer").textContent = value ? "请稍候…" : "提交回答 ↗";
+  updateFeedbackButton();
 }
 
 function draftKey() { return `${practice.session.id}:${practice.selected}`; }
@@ -92,6 +95,11 @@ function renderSession() {
   if (turn.answeredAt) {
     $("saved-answer").textContent = turn.answer;
     $("saved-feedback").textContent = turn.feedback;
+    const mode = turn.feedbackMode;
+    $("feedback-mode-label").textContent = ({ AI: "AI · 模型反馈", MOCK: "MOCK · 规则反馈", PENDING: "等待生成", PROCESSING: "生成中", FAILED: "生成失败", RATE_LIMITED: "暂时限流" })[mode] || mode;
+    $("generate-feedback").hidden = mode === "AI" || mode === "MOCK";
+    $("feedback-hint").textContent = mode === "AI" ? "AI 建议供学习参考，请结合资料核对。" : mode === "MOCK" ? "这条历史反馈来自本地规则，未调用 AI。" : "回答已保存。每站点每分钟最多 5 次请求，失败可手动重试。";
+    updateFeedbackButton();
     $("saved-reference").textContent = turn.referenceAnswer;
     document.querySelector(".reference-block").open = false;
     $("next-turn").hidden = !current;
@@ -185,6 +193,7 @@ $("answer-form").addEventListener("submit", async (event) => {
   const answer = $("practice-answer").value.trim();
   if (!answer) { $("practice-answer").setCustomValidity("请写下回答，不能只输入空格。"); $("practice-answer").reportValidity(); return; }
   const key = draftKey();
+  let generateAfterSave = false;
   setBusy(true);
   $("practice-error").hidden = true;
   try {
@@ -192,13 +201,54 @@ $("answer-form").addEventListener("submit", async (event) => {
     practice.session = await request(`/api/interviews/${practice.session.id}/answers`, { turnId: practice.selected, answer });
     practice.drafts.delete(key);
     renderSession(); // 留在本题展示反馈，用户点击下一题才切换。
+    generateAfterSave = practice.session.turns.find((turn) => turn.id === practice.selected)?.feedbackMode === "PENDING";
   } catch (error) {
     showError(error, true);
   } finally {
     setBusy(false);
     loadHistory();
   }
+  if (generateAfterSave) await generateFeedback();
 });
+
+function updateFeedbackButton() {
+  const seconds = Math.max(0, Math.ceil((practice.retryAt - Date.now()) / 1000));
+  $("generate-feedback").disabled = practice.busy || seconds > 0;
+  $("generate-feedback").textContent = practice.busy ? "正在处理…" : seconds > 0 ? `${seconds} 秒后可重试` : "生成 / 重试 AI 反馈";
+}
+
+async function generateFeedback() {
+  if (practice.busy || Date.now() < practice.retryAt || !practice.session) return;
+  setBusy(true);
+  $("practice-error").hidden = true;
+  $("feedback-hint").textContent = "正在生成 AI 反馈，通常需要几秒至几十秒。回答已保存。";
+  try {
+    // 回答的保存与反馈生成是两个请求，后者失败不会撤销前者。
+    practice.session = await request(`/api/interviews/${practice.session.id}/turns/${practice.selected}/feedback`, {}, 60000);
+    renderSession();
+  } catch (error) {
+    if (error.retryAfter > 0) practice.retryAt = Date.now() + error.retryAfter * 1000;
+    // 读取只查询本地数据库，不消耗模型额度，也不自动重发模型请求。
+    try { practice.session = await request(`/api/interviews/${practice.session.id}`); renderSession(); } catch (_) { /* 保留已显示的回答。 */ }
+    showError(error);
+    $("feedback-hint").textContent = "回答已保存，反馈尚未确认完成。可稍后刷新记录或重试。";
+  } finally { setBusy(false); }
+}
+
+$("generate-feedback").addEventListener("click", generateFeedback);
+setInterval(updateFeedbackButton, 1000); // 仅更新倒计时，不发送网络请求。
+
+async function loadAiMode() {
+  try {
+    const status = await request("/api/ai/status");
+    const mock = status.feedbackMode === "MOCK";
+    $("ai-mode-label").textContent = mock ? "MOCK · 规则反馈" : "AI · 面试反馈";
+    $("ai-mode-note").textContent = mock ? "当前使用本地 Mock 规则，不调用模型。" : "提交后将问题、参考答案和回答发送到配置的模型服务。聊天与向量站点各限 5 次 / 分钟。";
+  } catch (_) {
+    $("ai-mode-label").textContent = "反馈模式待确认";
+    $("ai-mode-note").textContent = "暂时无法读取反馈模式，请检查服务后刷新。";
+  }
+}
 
 $("practice-answer").addEventListener("input", () => {
   const input = $("practice-answer");
@@ -225,5 +275,6 @@ $("history-prev").addEventListener("click", () => { if (practice.page > 1) { pra
 $("history-next").addEventListener("click", () => { if (practice.page < practice.pages) { practice.page++; loadHistory(); } });
 
 loadHistory();
+loadAiMode();
 const initialSession = new URLSearchParams(location.search).get("session");
 if (initialSession && /^[1-9]\d*$/.test(initialSession)) loadSession(initialSession);

@@ -2,9 +2,11 @@ package com.example.interviewagent.service;
 
 import com.example.interviewagent.domain.InterviewTurn;
 import org.springframework.stereotype.Component;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 /** 规则只给表达建议，不判断内容正确性，不生成分数，不调用任何模型或网络。 */
 @Component
+@ConditionalOnProperty(name = "app.ai.feedback-mode", havingValue = "MOCK")
 public class MockAnswerFeedbackProvider implements AnswerFeedbackProvider {
     @Override
     public Feedback evaluate(InterviewTurn question, String answer) {

@@ -19,6 +19,12 @@
         <java.version>21</java.version>
     </properties>
     <dependencies>
+        <!-- 只引入聊天/向量适配模块，手动构造客户端以集中控制地址、超时和每次外发请求。 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-openai</artifactId>
+            <version>2.0.1</version>
+        </dependency>
         <!-- Spring Boot 4 的 MVC starter：HTTP、JSON、内嵌 Tomcat。 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
