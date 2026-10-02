@@ -7,7 +7,7 @@ if [[ ! -f "$jar_file" ]]; then
   echo '请先运行 ./scripts/mvn.sh -B -ntp package 生成可执行 JAR。' >&2
   exit 1
 fi
-if [[ -z "${DB_PASSWORD:-}" ]]; then
+if [[ -z "${DB_PASSWORD:-}" && ! -f config/application-local.yml ]]; then
   read -r -s -p "MySQL 应用账号 ${DB_USERNAME:-interview_app} 的密码：" DB_PASSWORD
   echo
   if [[ -z "$DB_PASSWORD" ]]; then
@@ -15,6 +15,8 @@ if [[ -z "${DB_PASSWORD:-}" ]]; then
     exit 1
   fi
 fi
-# 在脚本进程里导出，Java 子进程继承；不会修改父终端、IDEA 配置或 .zshrc。
-export DB_PASSWORD
+# 本地 YAML 存在时交给 Spring 读取；环境变量仍可覆盖 YAML 中的默认密码。
+if [[ -n "${DB_PASSWORD:-}" ]]; then
+  export DB_PASSWORD
+fi
 exec java -jar "$jar_file"

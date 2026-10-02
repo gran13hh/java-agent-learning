@@ -1,0 +1,5 @@
+# 复制为同目录的 application-local.yml，再将 CHANGE_ME 改为应用账号密码。
+# 实际文件被 Git 忽略，位于 src 之外，不会打包进应用 JAR。
+spring:
+  datasource:
+    password: "${DB_PASSWORD:CHANGE_ME}"

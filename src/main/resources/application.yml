@@ -3,13 +3,16 @@ server:
   address: 127.0.0.1
   port: ${SERVER_PORT:8080}
 spring:
+  config:
+    # 外部本地配置不会打进 JAR，也不提交 Git。IDEA 的工作目录应设为项目根目录。
+    import: optional:file:./config/application-local.yml
   application:
     name: interview-agent
   datasource:
     # 本机教学连接：公钥获取用于 MySQL 密码认证；远程部署时应配置并验证 TLS。
     url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/interview_agent?sslMode=DISABLED&allowPublicKeyRetrieval=true&connectionTimeZone=Asia/Shanghai}
     username: ${DB_USERNAME:interview_app}
-    password: ${DB_PASSWORD}
+    password: ${DB_PASSWORD:}
     hikari:
       maximum-pool-size: 5
       minimum-idle: 1

@@ -9,6 +9,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.dao.DataAccessException;
+import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
+import org.springframework.core.env.StandardEnvironment;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,7 +31,20 @@ class MySqlQuestionRepositoryTest {
         String url = System.getenv().getOrDefault("DB_URL", "jdbc:mysql://127.0.0.1:3306/interview_agent"
                 + "?sslMode=DISABLED&allowPublicKeyRetrieval=true&connectionTimeZone=Asia/Shanghai");
         String password = System.getenv("DB_PASSWORD");
-        assertNotNull(password, "请通过交互脚本设置 DB_PASSWORD");
+        // 复用已在类路径中的 YAML 解析库，不为测试另装 Python 包或新依赖。
+        var localConfig = new FileSystemResource("config/application-local.yml");
+        if ((password == null || password.isBlank()) && localConfig.exists()) {
+            var yaml = new YamlPropertiesFactoryBean();
+            yaml.setResources(localConfig);
+            var properties = yaml.getObject();
+            if (properties != null) {
+                String configured = properties.getProperty("spring.datasource.password");
+                if (configured != null) {
+                    password = new StandardEnvironment().resolveRequiredPlaceholders(configured);
+                }
+            }
+        }
+        assertNotNull(password, "请配置本地 YAML 或通过交互脚本设置 DB_PASSWORD");
         dataSource = new SingleConnectionDataSource(url,
                 System.getenv().getOrDefault("DB_USERNAME", "interview_app"), password, true);
         dataSource.getConnection().setAutoCommit(false);
