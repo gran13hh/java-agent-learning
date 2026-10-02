@@ -27,3 +27,7 @@ logs/
 # Embedded database files, if introduced for local tests
 *.mv.db
 *.trace.db
+
+# Python helper bytecode
+__pycache__/
+*.pyc

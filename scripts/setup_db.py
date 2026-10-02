@@ -41,6 +41,7 @@ def main():
         "SELECT '初始化完成：interview_agent / interview_app';\n"
     )
     schema = (PROJECT / "scripts/mysql/schema.sql").read_text()
+    schema += "\n" + (PROJECT / "scripts/mysql/002-interviews.sql").read_text()
     result = subprocess.run(args, input=schema + "\n" + account_sql,
                             text=True, env=env, capture_output=True)
     if result.returncode:

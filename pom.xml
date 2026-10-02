@@ -14,7 +14,7 @@
     <artifactId>interview-agent</artifactId>
     <version>0.1.0</version>
     <name>InterviewAgent</name>
-    <description>Java 与 AI Agent 学习项目：第一阶段题库 API</description>
+    <description>Java 与 AI Agent 学习项目：题库与模拟面试闭环</description>
     <properties>
         <java.version>21</java.version>
     </properties>

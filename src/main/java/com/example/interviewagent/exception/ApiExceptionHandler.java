@@ -24,6 +24,16 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
+    @ExceptionHandler(InterviewNotFoundException.class)
+    public ProblemDetail interviewNotFound(InterviewNotFoundException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
+    @ExceptionHandler(InterviewConflictException.class)
+    public ProblemDetail interviewConflict(InterviewConflictException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
     @ExceptionHandler(InvalidRequestException.class)
     public ProblemDetail invalidRequest(InvalidRequestException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
