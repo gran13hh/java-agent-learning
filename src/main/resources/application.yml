@@ -1,0 +1,23 @@
+server:
+  # 当前是本地单用户教学应用，默认只监听本机。
+  address: 127.0.0.1
+  port: ${SERVER_PORT:8080}
+spring:
+  application:
+    name: interview-agent
+  datasource:
+    # 本机教学连接：公钥获取用于 MySQL 密码认证；远程部署时应配置并验证 TLS。
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/interview_agent?sslMode=DISABLED&allowPublicKeyRetrieval=true&connectionTimeZone=Asia/Shanghai}
+    username: ${DB_USERNAME:interview_app}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 5000
+  sql:
+    init:
+      # DDL 由管理员初始化脚本执行；应用账号只有 DML 权限。
+      mode: never
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
