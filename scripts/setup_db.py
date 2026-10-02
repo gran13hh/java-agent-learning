@@ -44,6 +44,7 @@ def main():
     schema += "\n" + (PROJECT / "scripts/mysql/002-interviews.sql").read_text()
     schema += "\n" + (PROJECT / "scripts/mysql/003-ai-feedback.sql").read_text()
     schema += "\n" + (PROJECT / "scripts/mysql/004-knowledge.sql").read_text()
+    schema += "\n" + (PROJECT / "scripts/mysql/005-agent.sql").read_text()
     result = subprocess.run(args, input=schema + "\n" + account_sql,
                             text=True, env=env, capture_output=True)
     if result.returncode:

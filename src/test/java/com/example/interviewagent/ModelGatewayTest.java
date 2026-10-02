@@ -1,6 +1,7 @@
 package com.example.interviewagent;
 
 import com.example.interviewagent.ai.*;
+import org.springframework.ai.chat.messages.*;
 import com.example.interviewagent.exception.*;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.*;
@@ -24,6 +25,7 @@ class ModelGatewayTest {
     private String lastRequest;
     private String lastAuthorization;
     private Duration cooldown;
+    private long responseDelayMillis;
 
     @BeforeEach
     void setup() throws Exception {
@@ -33,6 +35,9 @@ class ModelGatewayTest {
             lastPath = exchange.getRequestURI().getPath();
             lastAuthorization = exchange.getRequestHeaders().getFirst("Authorization");
             lastRequest = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            if (responseDelayMillis > 0) {
+                try { Thread.sleep(responseDelayMillis); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            }
             if (status == 429) exchange.getResponseHeaders().add("Retry-After", "17");
             if (status == 307) exchange.getResponseHeaders().add("Location", "/redirected");
             exchange.getResponseHeaders().add("Content-Type", "application/json");
@@ -122,5 +127,60 @@ class ModelGatewayTest {
         String valid = "{\"assessment\":\"基本准确\",\"strengths\":[\"概念清晰\"],\"improvements\":[\"补充实例\"],\"followUpQuestion\":\"你的项目中如何应用？\"}";
         assertTrue(evaluator.validateAndFormat(valid).contains("你的项目中如何应用？"));
         assertThrows(AiCallException.class, () -> evaluator.validateAndFormat(valid.replace("基本准确", "x".repeat(1001))));
+    }
+
+    @Test
+    void nativeToolCallsAreReturnedWithoutAutomaticExecutionAndMessagesRoundTrip() {
+        body = """
+                {"id":"test","object":"chat.completion","created":1,"model":"custom/model","choices":[
+                  {"index":0,"finish_reason":"tool_calls","message":{"role":"assistant","content":null,"tool_calls":[
+                    {"id":"call_1","type":"function","function":{"name":"list_questions","arguments":"{\\\"topic\\\":\\\"JAVA\\\",\\\"limit\\\":2}"}}
+                  ]}}]}
+                """;
+        var output = gateway.next(List.of(new UserMessage("查两道题")), true);
+        assertEquals(1, requests.get()); assertEquals("list_questions", output.getToolCalls().getFirst().name());
+        var request = JsonMapper.builder().build().readTree(lastRequest);
+        assertEquals("custom/model", request.get("model").asText());
+        assertEquals(1600, request.get("max_completion_tokens").asInt());
+        assertEquals(3, request.get("tools").size()); assertEquals("auto", request.get("tool_choice").asText());
+        assertFalse(request.get("parallel_tool_calls").asBoolean());
+        body = chatResponse("{\"answer\":\"建议\",\"sourceIds\":[\"E1\"]}");
+        gateway.next(List.of(new UserMessage("查两道题"), output, ToolResponseMessage.builder().responses(List.of(
+                new ToolResponseMessage.ToolResponse("call_1", "list_questions", "{\"evidenceId\":\"E1\",\"data\":[]}"))).build()), false);
+        request = JsonMapper.builder().build().readTree(lastRequest);
+        assertEquals("custom/model", request.get("model").asText());
+        assertEquals("none", request.get("tool_choice").asText());
+        assertEquals("tool", request.get("messages").get(2).get("role").asText());
+        assertEquals("call_1", request.get("messages").get(2).get("tool_call_id").asText());
+        assertEquals(2, requests.get());
+    }
+
+    @Test
+    void agentSharesChatBudgetAndExpiredDeadlineCannotLeakToNextRequest() {
+        body = chatResponse("完成"); permits.put("chat", 5);
+        assertThrows(AiRateLimitException.class, () -> gateway.next(List.of(new UserMessage("test")), true));
+        assertEquals(0, requests.get()); permits.clear();
+        try (var deadline = CallDeadline.within(Duration.ZERO)) {
+            assertThrows(AiDeadlineException.class, () -> gateway.next(List.of(new UserMessage("test")), true));
+        }
+        assertEquals(0, requests.get()); assertEquals("完成", gateway.chat("system", "user"));
+        assertEquals(1, requests.get());
+    }
+
+    @Test
+    void truncatedAgentResponseIsRejected() {
+        body = chatResponse("{\"answer\":").replace("\"stop\"", "\"length\"");
+        assertThrows(AiCallException.class, () -> gateway.next(List.of(new UserMessage("test")), true));
+        assertEquals(1, requests.get());
+    }
+
+    @Test
+    void remainingRunBudgetShortensActualNetworkTimeout() {
+        body = chatResponse("完成"); gateway.chat("warmup", "user");
+        responseDelayMillis = 500;
+        try (var deadline = CallDeadline.within(Duration.ofMillis(50))) {
+            assertThrows(AiDeadlineException.class, () -> gateway.next(List.of(new UserMessage("slow")), true));
+        }
+        assertTrue(requests.get() <= 2); // 请求可能在出站前耗尽预算，但绝不能自动重试。
     }
 }

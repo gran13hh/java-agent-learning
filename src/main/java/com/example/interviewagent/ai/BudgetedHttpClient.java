@@ -23,8 +23,10 @@ public final class BudgetedHttpClient implements com.openai.core.http.HttpClient
                 .connectTimeout(Duration.ofSeconds(10)).readTimeout(Duration.ofSeconds(45))
                 .addNetworkInterceptor(chain -> {
                     // 建连完成、真正发送 HTTP 之前计数，连接耗时不会提前消耗滑动窗口。
+                    CallDeadline.check();
                     budget.acquire(provider);
                     chain.request().tag(AtomicBoolean.class).set(true);
+                    CallDeadline.check(); // 等限流行锁期间预算也可能耗尽，不能继续外发。
                     return chain.proceed(chain.request());
                 })
                 .callTimeout(Duration.ofSeconds(45)).build();
@@ -32,6 +34,7 @@ public final class BudgetedHttpClient implements com.openai.core.http.HttpClient
 
     @Override
     public HttpResponse execute(HttpRequest request, RequestOptions options) {
+        CallDeadline.check();
         var body = new ByteArrayOutputStream();
         if (request.body() != null) request.body().writeTo(body);
         var counted = new AtomicBoolean();
@@ -42,10 +45,9 @@ public final class BudgetedHttpClient implements com.openai.core.http.HttpClient
         builder.method(request.method().toString(), request.body() == null ? null : RequestBody.create(
                 body.toByteArray(), MediaType.parse(request.body().contentType())));
         var call = client.newCall(builder.build());
-        if (options.getTimeout() != null) {
-            long nanos = Math.min(Duration.ofSeconds(45).toNanos(), options.getTimeout().request().toNanos());
-            call.timeout().timeout(Math.max(1, nanos), java.util.concurrent.TimeUnit.NANOSECONDS);
-        }
+        Duration timeout = options.getTimeout() == null ? Duration.ofSeconds(45) : options.getTimeout().request();
+        long nanos = CallDeadline.remaining(timeout.compareTo(Duration.ofSeconds(45)) < 0 ? timeout : Duration.ofSeconds(45)).toNanos();
+        call.timeout().timeout(Math.max(1, nanos), java.util.concurrent.TimeUnit.NANOSECONDS);
         // SDK 和连接层均没有自动重试；额度由 network interceptor 独立提交。
         try (var response = call.execute()) {
             if (response.code() == 429) {
@@ -70,7 +72,8 @@ public final class BudgetedHttpClient implements com.openai.core.http.HttpClient
         } catch (IOException exception) {
             // DNS/TLS 等建连前失败也保守地计入一次；已经计数的请求不会重复扣额度。
             if (!counted.get()) budget.acquire(provider);
-            throw new AiCallException("模型请求连接失败或超过 45 秒；回答已保存，可稍后重试反馈");
+            CallDeadline.check();
+            throw new AiCallException("模型请求连接失败或超时，请稍后手动重试");
         }
     }
 

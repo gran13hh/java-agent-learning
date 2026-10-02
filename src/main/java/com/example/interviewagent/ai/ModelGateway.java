@@ -16,7 +16,7 @@ import java.util.*;
 
 /** 聊天与向量分开配置、分开额度；后续 RAG 也必须经这个入口访问向量站点。 */
 @Component
-public class ModelGateway implements VectorEncoder {
+public class ModelGateway implements VectorEncoder, com.example.interviewagent.agent.AgentModel {
     private final AiProperties properties;
     private final RequestBudget budget;
     private final List<OpenAIClient> clients = new ArrayList<>();
@@ -95,6 +95,29 @@ public class ModelGateway implements VectorEncoder {
         } catch (RuntimeException exception) { throw sanitized(exception); }
     }
 
+    /** Spring AI 2.0.1 的 ChatModel 仅返回 tool_calls；循环与执行权限由本项目控制。 */
+    public AssistantMessage next(List<Message> messages, boolean allowTools) {
+        try {
+            // 单次 options 的 builder 自带默认模型，必须显式设置，否则会覆盖自定义站点模型名。
+            var options = OpenAiChatOptions.builder().model(properties.getChat().getModel()).maxCompletionTokens(1600)
+                    .toolCallbacks(com.example.interviewagent.agent.AgentToolCatalog.TOOLS)
+                    .toolChoice(allowTools ? "auto" : "none").parallelToolCalls(false)
+                    .timeout(CallDeadline.remaining(Duration.ofSeconds(45))).maxRetries(0).build();
+            var response = chat().call(new Prompt(messages, options));
+            if (response == null || response.getResult() == null || response.getResult().getOutput() == null)
+                throw new AiCallException("模型未返回有效 Agent 响应");
+            var generation = response.getResult();
+            String reason = generation.getMetadata().getFinishReason();
+            // SDK 在该版本中把 finish_reason 转成大写枚举名，兼容两种大小写。
+            if ("length".equalsIgnoreCase(reason) || "content_filter".equalsIgnoreCase(reason))
+                throw new AiCallException("模型响应未完整结束，本次 Agent 已停止");
+            var output = generation.getOutput();
+            if ((output.getText() != null && output.getText().length() > 12000) || output.getToolCalls().size() > 8)
+                throw new AiCallException("模型响应超过 Agent 大小限制");
+            return output;
+        } catch (RuntimeException exception) { throw sanitized(exception); }
+    }
+
     /** 相同维度不代表相同向量空间；地址、模型或维度变化后必须重建索引。不包含密钥。 */
     public String embeddingIdentity() {
         var endpoint = properties.getEmbedding();
@@ -108,6 +131,7 @@ public class ModelGateway implements VectorEncoder {
         for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
             if (cause instanceof AiRateLimitException limited) return limited;
             if (cause instanceof AiCallException safe) return safe;
+            if (cause instanceof AiDeadlineException deadline) return deadline;
         }
         return new AiCallException("模型调用或响应解析失败，请检查服务状态后重试");
     }

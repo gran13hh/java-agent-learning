@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>复习助手 · Interview Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23564ad5'/%3E%3Cpath d='M12 12h16v12H18l-6 5z' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/interview.css">
+  <link rel="stylesheet" href="/agent.css">
+  <script src="/agent.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到复习助手</a>
+  <aside class="sidebar" aria-label="学习导航">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">✦</span><span>Interview<span class="brand-sub">LAB / 学习工作台</span></span></a>
+    <div class="sidebar-heading">我的练习空间</div>
+    <nav class="topic-nav"><a class="nav-item" href="/"><span class="nav-icon" aria-hidden="true">▦</span>我的题库</a><a class="nav-item" href="/interview.html"><span class="nav-icon" aria-hidden="true">▷</span>模拟面试</a><a class="nav-item" href="/knowledge.html"><span class="nav-icon" aria-hidden="true">▤</span>学习资料</a><a class="nav-item active" href="/agent.html" aria-current="page"><span class="nav-icon" aria-hidden="true">✧</span>复习助手</a></nav>
+    <div class="sidebar-note"><span class="note-symbol" aria-hidden="true">✳</span><strong>把理解，讲出来。</strong><p>从一个概念，到一个例子，<br>练习清晰完整地表达。</p><span class="note-line"></span><span class="note-footer">每一次作答，都是一次进步。</span></div>
+    <div class="sidebar-footer"><span class="avatar">我</span><span>我的学习空间<small>保持好奇，持续练习</small></span></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><div class="breadcrumb">学习工作台<span>/</span><strong>复习助手</strong></div><span class="mock-badge">AGENT · 有依据的下一步</span></header>
+    <main id="main">
+      <section class="page-heading"><div><div class="eyebrow">TURN REFLECTION INTO ACTION</div><h1>找到下一步，练什么<span class="heading-dot">.</span></h1><p>结合你的目标、笔记和面试记录，安排一份可以行动的复习建议。</p></div><button id="new-agent" class="button secondary" type="button">新建目标</button></section>
+      <div class="practice-grid">
+        <section class="practice-panel" aria-label="复习助手">
+          <div id="agent-error" class="form-error" role="alert" hidden></div>
+          <form id="agent-form"><div class="practice-kicker">01 / 确定方向</div><h2>今天想补上哪一块？</h2><p class="section-description">助手会按需查题库、检索笔记或读取你选择的面试。不会修改题库和面试记录。</p>
+            <label class="field-label" for="agent-goal">复习目标</label><textarea id="agent-goal" rows="5" maxlength="2000" required placeholder="例如：请检索我关于 Java 集合的笔记，给出 3 条复习要点，并从题库挑选 2 道 Java 题。"></textarea>
+            <label class="field-label" for="agent-session">参考哪场面试 <span>可选，仅开放你选定的这一场</span></label><select id="agent-session"><option value="">不读取面试记录</option></select>
+            <p class="mock-note">目标及实际读取的资料会发送到已配置的模型服务。每次最多 3 轮模型调用、3 次工具请求；执行预算 90 秒。聊天和向量服务仍各限 5 次 / 分钟。</p>
+            <button id="start-agent" class="button primary" type="submit">开始分析 →</button>
+          </form>
+          <section id="agent-run" hidden><div class="session-meta"><span id="run-label" class="practice-kicker"></span><span id="run-state" class="session-state"></span></div><h2 id="run-goal" tabindex="-1"></h2><p id="run-message" class="section-description" role="status"></p><div id="run-counts" class="run-counts"></div>
+            <div id="run-result" class="feedback-block" hidden><h3>你的复习建议</h3><p id="agent-answer"></p></div>
+            <div class="agent-actions"><button id="execute-agent" class="button primary" type="button" hidden>执行已保存的目标</button><button id="retry-agent" class="button secondary" type="button" hidden>用相同目标新建一次尝试</button><button id="refresh-run" class="button secondary" type="button">刷新执行记录</button></div>
+            <div class="trace-heading"><h3>执行记录</h3><p>查看助手实际调用了什么、拿到了什么结果。展开每一步核对依据。</p></div><div id="agent-steps"></div>
+          </section>
+        </section>
+        <aside class="history-panel" aria-labelledby="agent-history-heading"><div class="history-heading"><div><span class="eyebrow">YOUR NEXT STEP</span><h2 id="agent-history-heading">运行记录</h2></div><button id="refresh-runs" class="page-button" aria-label="刷新运行列表" type="button">↻</button></div><p class="history-description">最近 20 次。刷新只读本地记录，不重发模型请求。</p><div id="agent-history"></div><div class="history-tip">建议值得参考，依据更值得核对。<br>一次专注一个复习目标。</div></aside>
+      </div>
+      <footer class="page-footer"><span>把复盘，变成下一次进步。</span><span>Interview Lab / 你的面试准备空间</span></footer>
+    </main>
+  </div>
+</body>
+</html>
