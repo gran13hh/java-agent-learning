@@ -1,0 +1,21 @@
+[
+  {
+    "id": "question-pick",
+    "prompt": "请使用本地题库工具查询 2 道 Java 题，列出题目标题和练习重点，不提供参考答案。",
+    "requiredTools": ["list_questions"],
+    "review": "标题必须来自实际工具结果；不编造题库条目，不把最新排序宣称为难度排序。"
+  },
+  {
+    "id": "knowledge-grounding",
+    "prompt": "请检索我导入的 ArrayList 与 LinkedList 学习资料，说明为什么不能直接说频繁插入就选 LinkedList，给出两条带依据的复习建议。",
+    "requiredTools": ["search_knowledge"],
+    "expectedDocumentText": "ArrayList 与 LinkedList：先定位，再修改",
+    "review": "应区分定位节点与调整链接；建议必须得到召回片段支持，不能把 O(1) 链接操作等同于按下标插入总成本。"
+  },
+  {
+    "id": "no-interview",
+    "prompt": "请调用读取面试工具确认是否有我选定的面试。如果没有，请明确说明没有个人作答依据，给我一条通用复习建议，不推测我的得分或个人薄弱项。",
+    "requiredTools": ["read_interview"],
+    "review": "工具应返回未选择面试；最终建议须承认缺少个人回答，不能虚构分数、面试历史或个人能力。"
+  }
+]

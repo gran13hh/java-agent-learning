@@ -11,6 +11,14 @@ spring:
     import: optional:file:./config/application-local.yml
   application:
     name: interview-agent
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      connect-timeout: 500ms
+      timeout: 500ms
+      repositories:
+        enabled: false
   datasource:
     # 本机教学连接：公钥获取用于 MySQL 密码认证；远程部署时应配置并验证 TLS。
     url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/interview_agent?sslMode=DISABLED&allowPublicKeyRetrieval=true&connectionTimeZone=Asia/Shanghai}

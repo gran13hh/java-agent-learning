@@ -34,6 +34,7 @@ public class AgentRepository {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Agent 运行不存在"));
     }
     public List<Run> list() { return jdbc.query(SELECT + " ORDER BY id DESC LIMIT 20", this::map); }
+    @Transactional(readOnly = true)
     public Detail detail(long id) {
         var run = get(id);
         var steps = jdbc.query("SELECT * FROM agent_steps WHERE run_id = ? ORDER BY position", (rs, n) -> {

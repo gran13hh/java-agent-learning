@@ -14,9 +14,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class QuestionService {
     private final QuestionRepository repository;
 
-    // 构造器注入明确表达依赖，便于测试；Spring 对单构造器无需额外 @Autowired。
+    private final com.example.interviewagent.cache.QuestionPageCache cache;
+
+    // 单参数入口供无需 Redis 的单元测试使用；应用明确选择下方 @Autowired 构造器。
     public QuestionService(QuestionRepository repository) {
-        this.repository = repository;
+        this(repository, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public QuestionService(QuestionRepository repository, com.example.interviewagent.cache.QuestionPageCache cache) {
+        this.repository = repository; this.cache = cache;
     }
 
     @Transactional
@@ -40,6 +47,7 @@ public class QuestionService {
         }
         // 先转成 long 再相乘，避免很大的 page 导致 int 溢出和负数 OFFSET。
         long offset = ((long) page - 1) * size;
-        return new PageResponse<>(repository.findPage(topic, size, offset), page, size, repository.count(topic));
+        java.util.function.Supplier<PageResponse<Question>> load = () -> new PageResponse<>(repository.findPage(topic, size, offset), page, size, repository.count(topic));
+        return cache == null ? load.get() : cache.getOrLoad(topic, page, size, load);
     }
 }

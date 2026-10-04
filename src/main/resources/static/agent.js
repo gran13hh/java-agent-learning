@@ -3,7 +3,7 @@ const $ = id => document.getElementById(id);
 const runLabels = { PENDING:"等待执行", RUNNING:"正在分析", SUCCEEDED:"已完成", FAILED:"执行失败", RATE_LIMITED:"达到限流", LIMIT_REACHED:"达到调用上限", TIMED_OUT:"超过时间预算", INTERRUPTED:"执行已中断" };
 const stepLabels = { STARTED:"处理中", SUCCEEDED:"完成", REJECTED:"已拒绝", FAILED:"未完成" };
 const toolLabels = { chat:"询问模型", list_questions:"查询题库", search_knowledge:"检索学习资料", read_interview:"读取选定面试" };
-let current = null, busy = false, pollTimer = null, retryAt = 0, pendingCreate = null, pollVersion = 0;
+let current = null, busy = false, progressStream = null, retryAt = 0, pendingCreate = null, viewVersion = 0;
 function node(tag, text, css) { const el = document.createElement(tag); el.textContent = text; if (css) el.className = css; return el; }
 function error(text) { $("agent-error").textContent = text; $("agent-error").hidden = !text; }
 function controls() {
@@ -34,7 +34,7 @@ function render() {
   $("run-result").hidden = !run.result; $("agent-answer").textContent = run.result || "";
   $("execute-agent").hidden = run.state !== "PENDING";
   $("retry-agent").hidden = ["PENDING","RUNNING","SUCCEEDED"].includes(run.state);
-  // 轮询时保留展开状态，避免阅读工具结果被每次刷新打断。
+  // 推送快照时保留展开状态，避免阅读工具结果被刷新打断。
   const opened = new Set([...document.querySelectorAll(".trace-step[open]")].map(el => el.dataset.position));
   $("agent-steps").replaceChildren();
   for (const step of steps) {
@@ -59,31 +59,55 @@ async function loadList() {
   if (!runs.length) $("agent-history").append(node("p", "还没有运行记录。写下第一个复习目标。", "agent-empty"));
   controls();
 }
-function stopPoll() { pollVersion++; if (pollTimer) clearTimeout(pollTimer); pollTimer = null; }
-function schedulePoll() {
-  stopPoll();
-  if (!current || current.run.state !== "RUNNING") return;
-  const id = current.run.id, version = pollVersion;
-  // 只读取本地 MySQL 的执行快照，不执行或重试任何模型/工具。
-  pollTimer = setTimeout(async () => {
-    try { const detail = await request(`/api/agent/runs/${id}`); if (current?.run.id !== id || version !== pollVersion) return; current = detail; render(); schedulePoll(); }
-    catch (_) { error("进度读取暂时失败，可手动刷新；执行请求没有被重发。"); }
-  }, 2000);
+function stopProgress() {
+  viewVersion++;
+  if (progressStream) progressStream.close(); progressStream = null;
 }
+function watchProgress() {
+  stopProgress();
+  if (!current || !["PENDING","RUNNING"].includes(current.run.state)) return;
+  const id = current.run.id, version = viewVersion;
+  if (!window.EventSource) { error("浏览器不支持实时进度，请使用刷新执行记录。"); return; }
+  const stream = new EventSource(`/api/agent/runs/${id}/events`); progressStream = stream;
+  let disconnects = 0;
+  stream.onopen = () => { if (version === viewVersion) error(""); };
+  stream.addEventListener("snapshot", event => {
+    if (version !== viewVersion || current?.run.id !== id) return;
+    try {
+      const detail = JSON.parse(event.data);
+      if (detail.run.id !== id) return;
+      current = detail; render();
+      if (!["PENDING","RUNNING"].includes(detail.run.state)) {
+        if (detail.run.retryAfterSeconds > 0) retryAt = Date.now() + detail.run.retryAfterSeconds * 1000;
+        stopProgress(); loadList().catch(() => {});
+      }
+    } catch (_) { stopProgress(); error("进度数据无法读取，请手动刷新执行记录。"); }
+  });
+  stream.addEventListener("done", () => { if (version === viewVersion) stopProgress(); });
+  stream.addEventListener("unavailable", () => { if (version === viewVersion) { stopProgress(); error("进度读取失败，请稍后刷新执行记录。"); } });
+  stream.onerror = () => {
+    if (version !== viewVersion) return;
+    // EventSource 自动重连仅 GET 快照，绝不重发执行 POST；连续失败 3 次后交还用户。
+    disconnects++;
+    if (disconnects >= 3) { stopProgress(); error("实时进度连接已断开，请刷新执行记录核对结果。"); }
+    else error("实时进度连接中断，正在重新连接；不会重新执行任务。");
+  };
+}
+window.addEventListener("pagehide", stopProgress);
 async function loadRun(id) {
-  stopPoll(); const version = pollVersion; const detail = await request(`/api/agent/runs/${id}`);
-  if (version !== pollVersion) return; current = detail; error(""); render();
-  history.replaceState(null,"",`?run=${id}`); schedulePoll();
+  stopProgress(); const version = viewVersion; const detail = await request(`/api/agent/runs/${id}`);
+  if (version !== viewVersion) return; current = detail; error(""); render();
+  history.replaceState(null,"",`?run=${id}`); watchProgress();
 }
 async function executeCurrent() {
   const id = current.run.id;
-  // 先启动长请求，再读取进度。界面显示 RUNNING 只是本地占位，真实状态以 GET 为准。
+  // 先启动长请求，再订阅 SSE 进度。界面显示 RUNNING 只是本地占位，真实状态以 GET 为准。
   const execution = request(`/api/agent/runs/${id}/execute`, {}, 110000);
-  current.run.state = "RUNNING"; current.run.message = "正在启动，请稍候…"; render(); schedulePoll();
+  current.run.state = "RUNNING"; current.run.message = "正在启动，请稍候…"; render(); watchProgress();
   try {
     current = await execution;
     if (current.run.retryAfterSeconds > 0) retryAt = Date.now() + current.run.retryAfterSeconds * 1000;
-    stopPoll(); render();
+    stopProgress(); render();
   } catch (failure) {
     try { await loadRun(id); } catch (_) {}
     throw failure;
@@ -110,7 +134,7 @@ $("execute-agent").addEventListener("click", () => operation(executeCurrent));
 $("retry-agent").addEventListener("click", () => operation(() => createAndExecute(current.run.prompt,current.run.sessionId)));
 $("refresh-run").addEventListener("click", () => { if (current) loadRun(current.run.id).catch(failure => error(failure.message)); });
 $("refresh-runs").addEventListener("click", () => loadList().catch(failure => error(failure.message)));
-$("new-agent").addEventListener("click", () => { stopPoll(); current = null; pendingCreate = null; error(""); $("agent-run").hidden = true; $("agent-form").hidden = false; history.replaceState(null,"",location.pathname); $("agent-goal").focus(); });
+$("new-agent").addEventListener("click", () => { stopProgress(); current = null; pendingCreate = null; error(""); $("agent-run").hidden = true; $("agent-form").hidden = false; history.replaceState(null,"",location.pathname); $("agent-goal").focus(); });
 async function setup() {
   try {
     await loadList();

@@ -27,6 +27,7 @@ public class JdbcQuestionRepository implements QuestionRepository {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public Question insert(CreateQuestionRequest request) {
         var keys = new GeneratedKeyHolder();
         // ? 是绑定参数，不拼接用户输入：数据库将其作为数据，而不是 SQL 语法。
@@ -45,6 +46,7 @@ public class JdbcQuestionRepository implements QuestionRepository {
         if (id == null) {
             throw new IllegalStateException("数据库未返回新增题目的主键");
         }
+        jdbc.update("UPDATE cache_versions SET version = version + 1 WHERE name = 'questions'");
         // 读取数据库实际生成的 id 和时间；调用方的事务覆盖 INSERT 与 SELECT。
         return findById(id.longValue()).orElseThrow(() -> new IllegalStateException("新增题目读取失败"));
     }
