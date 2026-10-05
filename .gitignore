@@ -31,3 +31,10 @@ logs/
 # Python helper bytecode
 __pycache__/
 *.pyc
+
+# Personal learning notes, machine download logs and local evaluation reports
+/local-notes/
+/docs/0[1-9]-*.md
+/docs/DOWNLOADS.md
+/docs/*dependency-downloads.json
+/docs/evaluation/V5-RESULTS.md

@@ -13,7 +13,7 @@ app:
       base-url: "https://YOUR_PROVIDER/v1"
       api-key: "${CHAT_API_KEY:CHANGE_ME}"
       model: "YOUR_MODEL_NAME"
-    # 向量网关已可调用；V3 再接入资料导入和检索。
+    # 用于资料索引与检索，与聊天模型分开配置。
     embedding:
       base-url: "https://YOUR_EMBEDDING_PROVIDER/v1"
       api-key: "${EMBEDDING_API_KEY:CHANGE_ME}"
