@@ -10,6 +10,8 @@
 - **复习助手**：模型可请求查询题库、检索资料和读取选定面试；应用控制执行预算，保存每一步工具调用，网页通过 SSE 展示进度。
 - **工程支持**：Redis 题库缓存、Redis + MySQL 请求限流、执行幂等、自动化测试和固定评测用例。
 
+初始化自带 3 道入门示例和 60 道基础题，覆盖 Java / Spring / HTTP、MySQL、Redis 与 Agent / RAG，全部附参考要点。已有数据库可单独导入基础题，方法见 [题库数据说明](docs/QUESTION_BANK.md)。
+
 当前定位为本地单用户应用，尚未实现多人账号与鉴权、交互式多轮追问、语音面试或独立薄弱项统计。
 
 ## 技术栈
@@ -79,6 +81,7 @@ macOS 可双击根目录的 `启动项目.command` 和 `停止项目.command`，
 - [架构与设计边界](docs/ARCHITECTURE.md)：数据流、RAG、Agent、缓存、限流和 SSE。
 - [HTTP 接口](docs/API.md)：接口清单、请求示例及调用注意事项。
 - [测试与评测](docs/VALIDATION.md)：测试命令、固定语料与真实模型评测步骤。
+- [题库数据说明](docs/QUESTION_BANK.md)：基础题范围、增量导入和重复执行约定。
 
 源码按 `controller`、`service`、`repository`、`domain`、`dto`、`ai`、`knowledge`、`agent`、`cache` 和 `exception` 分层。网页位于 `src/main/resources/static/`，数据库结构位于 `scripts/mysql/`。
 
