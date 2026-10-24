@@ -30,7 +30,7 @@
 
 ## 环境准备与配置
 
-准备 JDK 21、Maven 3、MySQL 8.4、Redis，以及运行辅助脚本需要的 Python 3 和 MySQL 客户端。Python 脚本仅使用标准库。`scripts/mvn.sh` 优先使用 `MAVEN_HOME`，其次使用标准安装位置的 IDEA 内置 Maven，最后使用 PATH 中的 Maven。
+准备 JDK 21、Maven 3、MySQL 8.4、Redis，以及运行辅助脚本需要的 Python 3 和 MySQL 客户端。Python 脚本仅使用标准库。`scripts/mvn.sh` 依次查找 `MAVEN_HOME`、PATH 中的 Maven、`~/Library/Developer/Tools/apache-maven-*` 中的独立安装，最后回退到标准安装位置的 IDEA 内置 Maven。多个独立安装并存时，可用 `MAVEN_HOME` 明确指定版本。
 
 macOS 的一键启动与 Redis 脚本按 Apple Silicon Homebrew 的 `/opt/homebrew` 路径编写；其他环境可自行启动 MySQL / Redis，再运行 Java 应用。IDEA 的 Project SDK 和 Maven JDK 均设置为 21，运行工作目录设为项目根目录。
 
